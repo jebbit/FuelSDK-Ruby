@@ -36,7 +36,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 =end 
 
 require 'securerandom'
-module FuelSDK
+module MarketingCloudSDK
 	class Response
 		# not doing accessor so user, can't update these values from response.
 		# You will see in the code some of these
@@ -77,10 +77,11 @@ module FuelSDK
 
 	class Client
 	attr_accessor :debug, :access_token, :auth_token, :internal_token, :refresh_token,
-		:id, :secret, :signature, :package_name, :package_folders, :parent_folders, :auth_token_expiration, :request_token_url
+		:id, :secret, :signature, :base_api_url, :package_name, :package_folders, :parent_folders, :auth_token_expiration,
+		:request_token_url, :soap_endpoint
 
-	include FuelSDK::Soap
-	include FuelSDK::Rest
+	include MarketingCloudSDK::Soap
+	include MarketingCloudSDK::Rest
 
 		def jwt= encoded_jwt
 			raise 'Require app signature to decode JWT' unless self.signature
@@ -101,9 +102,21 @@ module FuelSDK
         self.id = client_config["id"]
         self.secret = client_config["secret"]
         self.signature = client_config["signature"]
+				self.base_api_url = !(client_config["base_api_url"].to_s.strip.empty?) ? client_config["base_api_url"] : 'https://www.exacttargetapis.com'
+				self.request_token_url = !(client_config["request_token_url"].to_s.strip.empty?) ? client_config["request_token_url"] : 'https://auth.exacttargetapis.com/v1/requestToken'
+				self.soap_endpoint = client_config["soap_endpoint"]
 			end
 
-      self.request_token_url = params['request_token_url'] ? params['request_token_url'] : 'https://auth.exacttargetapis.com/v1/requestToken'
+			# Set a default value in case no 'client' params is sent
+			if (!self.base_api_url)
+				self.base_api_url =  'https://www.exacttargetapis.com'
+			end
+
+			# Leaving this for backwards compatibility
+			if (!self.request_token_url)
+				self.request_token_url =  params['request_token_url'] ? params['request_token_url'] : 'https://auth.exacttargetapis.com/v1/requestToken'
+			end
+
 			self.jwt = params['jwt'] if params['jwt']
 			self.refresh_token = params['refresh_token'] if params['refresh_token']
 
@@ -146,7 +159,7 @@ module FuelSDK
 		end
 
 		def AddSubscriberToList(email, ids, subscriber_key = nil)
-			s = FuelSDK::Subscriber.new
+			s = MarketingCloudSDK::Subscriber.new
 			s.client = self
 			lists = ids.collect{|id| {'ID' => id}}
 			s.properties = {"EmailAddress" => email, "Lists" => lists}
@@ -162,7 +175,7 @@ module FuelSDK
 		end
 
 		def CreateDataExtensions(definitions)
-			de = FuelSDK::DataExtension.new
+			de = MarketingCloudSDK::DataExtension.new
 			de.client = self
 			de.properties = definitions
 			de.post
@@ -246,7 +259,7 @@ module FuelSDK
 			import.properties["CustomerKey"] = SecureRandom.uuid
 			import.properties["Description"] = "SDK Generated Import"
 			import.properties["AllowErrors"] = "true"
-			import.properties["DestinationObject"] = {"ObjectID"=>dataExtensionCustomerKey}
+			import.properties["DestinationObject"] = {"CustomerKey"=>dataExtensionCustomerKey}
 			import.properties["FieldMappingType"] = "InferFromColumnHeadings"
 			import.properties["FileSpec"] = fileName
 			import.properties["FileType"] = "CSV"
