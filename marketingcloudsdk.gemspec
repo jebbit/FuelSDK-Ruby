@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 	spec.description   = %q{API wrapper for SOAP and REST API with Salesforce Marketing Cloud (ExactTarget)}
 	spec.summary       = %q{Fuel Client Library for Ruby}
 	spec.homepage      = "https://github.com/ExactTarget/FuelSDK-Ruby"
-	spec.license       = ""
+	spec.license       = "BSD 3-Clause \"New\" or \"Revised\" License"
 
 	spec.files         = `git ls-files`.split($/)
 	spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
